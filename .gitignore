@@ -1,0 +1,17 @@
+# Binary
+server.exe
+*.exe
+*.dll
+
+# Environment & Secrets
+.env
+
+# Dependencies
+vendor/
+
+# IDE files
+.vscode/
+.idea/
+
+# Uploads (Opsional, tergantung kebutuhan)
+uploads/
