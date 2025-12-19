@@ -29,7 +29,12 @@ func (m *MockUserRepoForUserSvc) CreateUser(ctx context.Context, user *model.Use
 // Stub method lain...
 func (m *MockUserRepoForUserSvc) FindByEmailOrUsername(ctx context.Context, id string) (*model.User, error) { return nil, nil }
 func (m *MockUserRepoForUserSvc) FindByID(ctx context.Context, id string) (*model.User, error) { return nil, nil }
-func (m *MockUserRepoForUserSvc) FindAll(ctx context.Context) ([]model.User, error) { return nil, nil }
+
+// [PERBAIKAN DI SINI] Sesuaikan signature FindAll dengan interface baru
+func (m *MockUserRepoForUserSvc) FindAll(ctx context.Context, limit, offset int, sortBy, order string) ([]model.User, int, error) {
+    return nil, 0, nil
+}
+
 func (m *MockUserRepoForUserSvc) UpdateUser(ctx context.Context, id string, user *model.User) error { return nil }
 func (m *MockUserRepoForUserSvc) DeleteUser(ctx context.Context, id string) error { return nil }
 func (m *MockUserRepoForUserSvc) GetStudentsByAdvisor(ctx context.Context, id string) ([]model.User, error) { return nil, nil }

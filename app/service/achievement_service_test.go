@@ -38,7 +38,12 @@ func (m *MockUserRepoStub) FindByEmailOrUsername(ctx context.Context, i string) 
 func (m *MockUserRepoStub) FindByID(ctx context.Context, id string) (*model.User, error) { return nil, nil }
 func (m *MockUserRepoStub) GetRoleIDByName(ctx context.Context, n string) (string, error) { return "", nil }
 func (m *MockUserRepoStub) CreateUser(ctx context.Context, u *model.User, r string, e map[string]string) error { return nil }
-func (m *MockUserRepoStub) FindAll(ctx context.Context) ([]model.User, error) { return nil, nil }
+
+// [PERBAIKAN DI SINI] Sesuaikan signature FindAll dengan interface baru
+func (m *MockUserRepoStub) FindAll(ctx context.Context, limit, offset int, sortBy, order string) ([]model.User, int, error) {
+    return nil, 0, nil
+}
+
 func (m *MockUserRepoStub) UpdateUser(ctx context.Context, id string, u *model.User) error { return nil }
 func (m *MockUserRepoStub) DeleteUser(ctx context.Context, id string) error { return nil }
 func (m *MockUserRepoStub) GetStudentsByAdvisor(ctx context.Context, id string) ([]model.User, error) { return nil, nil }

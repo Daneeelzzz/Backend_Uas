@@ -3,6 +3,7 @@ package repository
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"errors"
 	"tugas_uas/app/model"
 )
@@ -13,7 +14,7 @@ type UserRepository interface {
 	GetRoleIDByName(ctx context.Context, name string) (string, error)
 	
 	CreateUser(ctx context.Context, user *model.User, roleName string, extraData map[string]string) error
-	FindAll(ctx context.Context) ([]model.User, error)
+	FindAll(ctx context.Context, limit, offset int, sortBy, order string) ([]model.User, int, error)
 	UpdateUser(ctx context.Context, id string, user *model.User) error
 	DeleteUser(ctx context.Context, id string) error
 	
@@ -80,19 +81,47 @@ func (r *userRepository) CreateUser(ctx context.Context, user *model.User, roleN
 	return tx.Commit()
 }
 
-func (r *userRepository) FindAll(ctx context.Context) ([]model.User, error) {
-	query := `SELECT u.id, u.username, u.email, u.full_name, r.name, u.is_active FROM users u JOIN roles r ON u.role_id = r.id ORDER BY u.created_at DESC`
-	rows, err := r.db.QueryContext(ctx, query)
-	if err != nil { return nil, err }
+// [UPDATE] FindAll dengan Pagination & Sorting
+func (r *userRepository) FindAll(ctx context.Context, limit, offset int, sortBy, order string) ([]model.User, int, error) {
+	// 1. Whitelist sorting columns (Security Best Practice: SQL Injection Prevention)
+	validColumns := map[string]bool{"username": true, "email": true, "full_name": true, "created_at": true}
+	if !validColumns[sortBy] {
+		sortBy = "created_at" // Default
+	}
+	if order != "ASC" && order != "DESC" {
+		order = "DESC" // Default
+	}
+
+	// 2. Query Utama dengan Pagination
+	query := fmt.Sprintf(`
+		SELECT u.id, u.username, u.email, u.full_name, r.name, u.is_active 
+		FROM users u 
+		JOIN roles r ON u.role_id = r.id 
+		ORDER BY u.%s %s 
+		LIMIT $1 OFFSET $2`, sortBy, order)
+
+	rows, err := r.db.QueryContext(ctx, query, limit, offset)
+	if err != nil {
+		return nil, 0, err
+	}
 	defer rows.Close()
 
 	var users []model.User
 	for rows.Next() {
 		var u model.User
-		rows.Scan(&u.ID, &u.Username, &u.Email, &u.FullName, &u.RoleName, &u.IsActive)
-		users = append(users, u)
+		if err := rows.Scan(&u.ID, &u.Username, &u.Email, &u.FullName, &u.RoleName, &u.IsActive); err == nil {
+			users = append(users, u)
+		}
 	}
-	return users, nil
+
+	// 3. Hitung Total Data (Untuk Metadata Pagination)
+	var total int
+	err = r.db.QueryRowContext(ctx, "SELECT COUNT(*) FROM users").Scan(&total)
+	if err != nil {
+		return nil, 0, err
+	}
+
+	return users, total, nil
 }
 
 func (r *userRepository) UpdateUser(ctx context.Context, id string, user *model.User) error {
